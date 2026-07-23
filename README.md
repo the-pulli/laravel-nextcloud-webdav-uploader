@@ -12,8 +12,8 @@ An Artisan `nextcloud:upload` command for uploading files and folders to Nextclo
 - Automatic chunked uploads for large files, with a Laravel Prompts progress bar
 - SHA1 checksum skip-if-unchanged: rerunning against the same destination only transfers what changed
 - Post-upload checksum verification, so a corrupted transfer fails loudly instead of silently
-- Optional public share link creation, copied to the clipboard
-- Desktop notification on completion (via [pulli/pullbox](https://github.com/the-pulli/pullbox-php))
+- Optional public share link creation, copied to the clipboard (macOS only)
+- Desktop notification on completion (macOS only, via [pulli/pullbox](https://github.com/the-pulli/pullbox-php))
 
 ## Installation
 
@@ -80,6 +80,8 @@ Rerunning the same command only re-uploads files whose content actually changed 
 | `--force-chunk-above`  | Override the chunking threshold in MB (useful to exercise chunking without a huge test file)  |
 | `--share-dir`          | Create (or reuse) a public link share for the target folder, print it, and copy it to the clipboard |
 | `--share-file`         | Create (or reuse) a public link share for the uploaded file, print it, and copy it to the clipboard (exactly one file only) |
+
+The clipboard copy and the completion notification both shell out to macOS-only tools (`pbcopy`, `osascript`) and are silently skipped on Linux/Windows — the share link is still printed either way.
 
 ## Testing
 

@@ -116,8 +116,7 @@ it('creates a share link for the target folder, prints it, and copies it to the 
         ->expectsOutputToContain('Share link: https://cloud.test/s/abc123')
         ->assertSuccessful();
 
-    Process::assertRan(fn ($process) => $process->command === 'pbcopy'
-        && $process->input === 'https://cloud.test/s/abc123');
+    assertClipboardCopiedOnMacOnly('https://cloud.test/s/abc123');
 });
 
 it('creates a share link for the uploaded file, prints it, and copies it to the clipboard with --share-file', function () {
@@ -140,8 +139,7 @@ it('creates a share link for the uploaded file, prints it, and copies it to the 
         ->expectsOutputToContain('Share link: https://cloud.test/s/def456')
         ->assertSuccessful();
 
-    Process::assertRan(fn ($process) => $process->command === 'pbcopy'
-        && $process->input === 'https://cloud.test/s/def456');
+    assertClipboardCopiedOnMacOnly('https://cloud.test/s/def456');
 });
 
 it('fails when --share-file is passed with more than one uploaded file', function () {
@@ -184,5 +182,9 @@ it('sends a desktop notification with the number of uploaded files', function ()
 
     $this->artisan('nextcloud:upload', ['folder' => 'Documents', '--file' => [$file]])->assertSuccessful();
 
-    expect(AppleScript::lastScript())->toContain('1 file(s) uploaded to Nextcloud.');
+    if (PHP_OS_FAMILY === 'Darwin') {
+        expect(AppleScript::lastScript())->toContain('1 file(s) uploaded to Nextcloud.');
+    } else {
+        expect(AppleScript::lastScript())->toBeNull();
+    }
 });

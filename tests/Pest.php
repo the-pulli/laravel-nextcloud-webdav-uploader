@@ -5,6 +5,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Facades\Process;
 use Psr\Http\Message\RequestInterface;
 use Pulli\LaravelNextcloudWebdavUploader\Tests\TestCase;
 use Pulli\NextcloudWebdavUploader\NextcloudClient;
@@ -61,4 +62,19 @@ function checksumPropfindResponse(string $sha1, int $status = 207): Response
 function noRemoteChecksum(): Response
 {
     return new Response(404);
+}
+
+/**
+ * pbcopy is macOS-only: assert the clipboard copy actually ran when the
+ * test itself is running on Darwin, and that it was skipped everywhere
+ * else (CI runs on ubuntu-latest / windows-latest).
+ */
+function assertClipboardCopiedOnMacOnly(string $expectedInput): void
+{
+    if (PHP_OS_FAMILY === 'Darwin') {
+        Process::assertRan(fn ($process) => $process->command === 'pbcopy'
+            && $process->input === $expectedInput);
+    } else {
+        Process::assertDidntRun(fn ($process) => $process->command === 'pbcopy');
+    }
 }

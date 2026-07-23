@@ -114,7 +114,7 @@ class UploadCommand extends Command
             }
 
             $this->info(sprintf('Share link: %s', $link));
-            Process::input($link)->run('pbcopy');
+            $this->copyToClipboard($link);
         }
 
         if ($this->option('share-file')) {
@@ -136,15 +136,35 @@ class UploadCommand extends Command
             }
 
             $this->info(sprintf('Share link: %s', $link));
-            Process::input($link)->run('pbcopy');
+            $this->copyToClipboard($link);
         }
 
-        Notification::display(
-            sprintf('%d file(s) uploaded to Nextcloud.', $jobs->count()),
-            'Nextcloud Upload'
-        );
+        if ($this->isMacOS()) {
+            Notification::display(
+                sprintf('%d file(s) uploaded to Nextcloud.', $jobs->count()),
+                'Nextcloud Upload'
+            );
+        }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * pbcopy and osascript-based notifications (via pulli/pullbox) are
+     * macOS-only; skip them silently everywhere else rather than fail.
+     */
+    private function isMacOS(): bool
+    {
+        return PHP_OS_FAMILY === 'Darwin';
+    }
+
+    private function copyToClipboard(string $value): void
+    {
+        if (! $this->isMacOS()) {
+            return;
+        }
+
+        Process::input($value)->run('pbcopy');
     }
 
     /**
