@@ -2,6 +2,11 @@
 
 All notable changes to `Laravel Nextcloud Webdav Uploader` will be documented in this file.
 
+## v1.0.4 - 2026-07-23
+
+- **Breaking:** split `--share` into `--share-dir` (shares the destination folder, same as old `--share`) and `--share-file` (shares the single uploaded file; errors if more than one file was uploaded)
+- Fix: clipboard copy (`pbcopy`) and the completion desktop notification (`pulli/pullbox`/`osascript`) are macOS-only and now skipped silently on Linux/Windows instead of failing
+
 ## v1.0.3 - 2026-07-23
 
 Require Laravel 13 only. The #[Signature]/#[Description] attributes UploadCommand relies on are only processed by Laravel 13's Command base class — under Laravel 12 the command ended up with an empty name, breaking package discovery entirely.
