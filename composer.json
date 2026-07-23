@@ -17,17 +17,6 @@
             "role": "Developer"
         }
     ],
-    "repositories": {
-        "nextcloud-webdav-uploader": {
-            "type": "path",
-            "url": "../../../packages/nextcloud-webdav-uploader",
-            "options": {
-                "versions": {
-                    "pulli/nextcloud-webdav-uploader": "1.0.0"
-                }
-            }
-        }
-    },
     "require": {
         "php": "^8.4",
         "pulli/nextcloud-webdav-uploader": "^1.0",
