@@ -1,0 +1,79 @@
+{
+    "name": "pulli/laravel-nextcloud-webdav-uploader",
+    "description": "Chunked WebDAV uploads to Nextcloud for Laravel, with checksum verification and skip-if-unchanged support",
+    "keywords": [
+        "pulli",
+        "laravel",
+        "nextcloud",
+        "webdav",
+        "upload"
+    ],
+    "homepage": "https://github.com/the-pulli/laravel-nextcloud-webdav-uploader",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PuLLi",
+            "email": "the@pulli.dev",
+            "role": "Developer"
+        }
+    ],
+    "repositories": {
+        "nextcloud-webdav-uploader": {
+            "type": "path",
+            "url": "../../../packages/nextcloud-webdav-uploader",
+            "options": {
+                "versions": {
+                    "pulli/nextcloud-webdav-uploader": "1.0.0"
+                }
+            }
+        }
+    },
+    "require": {
+        "php": "^8.4",
+        "pulli/nextcloud-webdav-uploader": "^1.0",
+        "pulli/pullbox": "^v3.0.0",
+        "spatie/laravel-package-tools": "^1.16",
+        "illuminate/contracts": "^11.0||^12.0||^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.14",
+        "nunomaduro/collision": "^8.8",
+        "orchestra/testbench": "^11.0.0||^10.0.0||^9.0.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-arch": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pulli\\LaravelNextcloudWebdavUploader\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pulli\\LaravelNextcloudWebdavUploader\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@composer run prepare",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Pulli\\LaravelNextcloudWebdavUploader\\NextcloudWebdavUploaderServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
