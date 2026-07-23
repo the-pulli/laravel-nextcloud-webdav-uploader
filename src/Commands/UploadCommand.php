@@ -28,7 +28,7 @@ use function sprintf;
 use function trim;
 
 #[Description('Uploads file(s) and/or whole folder(s) to Nextcloud via WebDAV, chunking automatically above the single-PUT size limit')]
-#[Signature('nextcloud:upload {folder=Uploads : Target folder in Nextcloud (relative to the user files root; created if missing)} {--f|file=* : Local file or directory to upload (repeatable); a directory is uploaded as a subfolder of the same name} {--include-subdirs : When a --file path is a directory, also include its subdirectories recursively (default: only that directory\'s direct files)} {--chunk-size= : Override the chunk size in MB used for files above the chunking threshold} {--force-chunk-above= : Override the chunking threshold in MB, bypassing the ~4 GiB default (useful to test chunked uploads with a small file)} {--share : Create (or reuse) a public link share for the target folder, print it, and copy it to the clipboard}')]
+#[Signature('nextcloud:upload {folder=Uploads : Target folder in Nextcloud (relative to the user files root; created if missing)} {--f|file=* : Local file or directory to upload (repeatable); a directory is uploaded as a subfolder of the same name} {--include-subdirs : When a --file path is a directory, also include its subdirectories recursively (default: only that directory\'s direct files)} {--chunk-size= : Override the chunk size in MB used for files above the chunking threshold} {--force-chunk-above= : Override the chunking threshold in MB, bypassing the ~4 GiB default (useful to test chunked uploads with a small file)} {--share-dir : Create (or reuse) a public link share for the target folder, print it, and copy it to the clipboard} {--share-file : Create (or reuse) a public link share for the uploaded file, print it, and copy it to the clipboard (only valid when exactly one file is uploaded)}')]
 class UploadCommand extends Command
 {
     public function handle(NextcloudClient $client): int
@@ -61,6 +61,12 @@ class UploadCommand extends Command
             return self::FAILURE;
         }
 
+        if ($this->option('share-dir') && $this->option('share-file')) {
+            $this->error('Pass either --share-dir or --share-file, not both.');
+
+            return self::FAILURE;
+        }
+
         if ($this->option('chunk-size') !== null) {
             $client->setChunkSize(((int) $this->option('chunk-size')) * 1024 * 1024);
         }
@@ -79,19 +85,50 @@ class UploadCommand extends Command
             return self::FAILURE;
         }
 
+        $uploadedPaths = Collection::make();
         $failed = false;
 
         foreach ($jobs as $job) {
-            $failed = ! $this->uploadOne($client, $job['folder'], $job['local']) || $failed;
+            $remotePath = $this->uploadOne($client, $job['folder'], $job['local']);
+
+            if ($remotePath === null) {
+                $failed = true;
+
+                continue;
+            }
+
+            $uploadedPaths->push($remotePath);
         }
 
         if ($failed) {
             return self::FAILURE;
         }
 
-        if ($this->option('share')) {
+        if ($this->option('share-dir')) {
             try {
                 $link = $client->shareLink($folder);
+            } catch (NextcloudException $e) {
+                $this->error($e->getMessage());
+
+                return self::FAILURE;
+            }
+
+            $this->info(sprintf('Share link: %s', $link));
+            Process::input($link)->run('pbcopy');
+        }
+
+        if ($this->option('share-file')) {
+            if ($uploadedPaths->count() !== 1) {
+                $this->error(sprintf(
+                    '--share-file requires exactly one file to be uploaded (got %d); use --share-dir to share the whole folder instead.',
+                    $uploadedPaths->count()
+                ));
+
+                return self::FAILURE;
+            }
+
+            try {
+                $link = $client->shareLink((string) $uploadedPaths->first());
             } catch (NextcloudException $e) {
                 $this->error($e->getMessage());
 
@@ -146,7 +183,7 @@ class UploadCommand extends Command
             ->values();
     }
 
-    private function uploadOne(NextcloudClient $client, string $folder, string $file): bool
+    private function uploadOne(NextcloudClient $client, string $folder, string $file): ?string
     {
         $size = (int) filesize($file);
         $chunked = $size > $client->chunkThreshold();
@@ -168,7 +205,7 @@ class UploadCommand extends Command
             $this->error(sprintf('%s', basename($file)));
             $this->error(sprintf('  ! %s', $e->getMessage()));
 
-            return false;
+            return null;
         }
 
         /** @var Progress<int>|null $progress */
@@ -177,7 +214,7 @@ class UploadCommand extends Command
         if ($result['skipped']) {
             $this->info(sprintf('%s (%s) — unchanged, skipped', basename($file), Number::fileSize($size, precision: 2)));
 
-            return true;
+            return $result['path'];
         }
 
         $this->info(sprintf(
@@ -188,6 +225,6 @@ class UploadCommand extends Command
         ));
         $this->line(sprintf('  → /%s (verified)', $result['path']));
 
-        return true;
+        return $result['path'];
     }
 }
